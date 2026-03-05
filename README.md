@@ -1,7 +1,7 @@
 # Android Builder Environment
 
-Create pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 34**.  
-Push them to Docker Hub once — pull them from anywhere and get straight to building.
+Pre-built Docker image with **Java 25 + Gradle 9.3.0 + Android SDK 34**.  
+Build and push it to any container registry once — pull it anywhere and get straight to building. No toolchain setup on every CI run.
 
 ---
 
@@ -10,7 +10,7 @@ Push them to Docker Hub once — pull them from anywhere and get straight to bui
 | Tool | Version |
 |------|---------|
 | Base OS | Ubuntu 24.04 |
-| Java | OpenJDK 25 (EA) |
+| Java | Oracle JDK 25 |
 | Gradle | 9.3.0 |
 | Android compileSdk | 34 |
 | Android Build Tools | 34.0.0 |
@@ -24,7 +24,7 @@ Push them to Docker Hub once — pull them from anywhere and get straight to bui
 ```
 .
 ├── Dockerfile               ← The image definition
-├── build-and-push.sh        ← Helper to build & push to Docker Hub
+├── build-and-push.sh        ← Build & push to any container registry
 ├── warmup/                  ← Minimal Android project (Gradle cache pre-warm)
 │   ├── build.gradle
 │   ├── settings.gradle
@@ -38,36 +38,72 @@ Push them to Docker Hub once — pull them from anywhere and get straight to bui
 
 ---
 
-## 1. One-time Docker Hub setup
-
-```bash
-# Log in to Docker Hub (credentials are cached locally)
-docker login
-```
-
-If you don't have a Docker Hub account, create one at https://hub.docker.com.  
-Create a repository named `android-ci` (public or private).
-
----
-
-## 2. Build & push the image
+## 1. Build & push the image
 
 ```bash
 chmod +x build-and-push.sh
 
-# Build and push — automatically tags as both <tag> and :latest
-./build-and-push.sh YOUR_DOCKERHUB_USER
+# Docker Hub
+./build-and-push.sh --registry dockerhub --user 1ndevelopment
 
-# Or specify a custom tag
-./build-and-push.sh YOUR_DOCKERHUB_USER sdk34-java25
+# GitHub Container Registry
+./build-and-push.sh --registry ghcr --user 1ndevelopment
+
+# Google Container Registry
+./build-and-push.sh --registry gcr --user my-gcp-project
+
+# Amazon ECR
+./build-and-push.sh --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com
+
+# Azure Container Registry
+./build-and-push.sh --registry acr --host myregistry.azurecr.io
+
+# Self-hosted / custom
+./build-and-push.sh --registry custom --host registry.mycompany.com --user myteam
 ```
+
+### Additional flags
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--repo` | Override the image name | `android-build-env` |
+| `--tag` | Override the image tag | `java25-sdk34` |
+| `--no-cache` | Build without Docker layer cache | — |
+| `--no-push` | Build only, skip push | — |
 
 > **First build takes ~15–20 min** — installs Java 25, Gradle, the Android SDK,
 > and pre-warms the Gradle dependency cache. Docker layer caching makes rebuilds fast.
 
-Your image will be available at:
+---
+
+## 2. Registry setup
+
+### Docker Hub
+```bash
+docker login
 ```
-docker pull YOUR_DOCKERHUB_USER/android-ci:latest
+Create a repository named `android-build-env` at https://hub.docker.com.
+
+### GitHub Container Registry (ghcr.io)
+```bash
+echo YOUR_GITHUB_PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+```
+No repository pre-creation needed — it's created on first push.
+
+### Google Container Registry (gcr.io)
+```bash
+gcloud auth configure-docker gcr.io
+```
+
+### Amazon ECR
+```bash
+aws ecr create-repository --repository-name android-build-env --region us-east-1
+```
+The script handles login automatically via the AWS CLI.
+
+### Azure Container Registry
+```bash
+az acr login --name myregistry
 ```
 
 ---
@@ -84,7 +120,7 @@ docker pull YOUR_DOCKERHUB_USER/android-ci:latest
 
 ```yaml
 container:
-  image: YOUR_DOCKERHUB_USER/android-ci:latest
+  image: YOUR_DOCKERHUB_USER/android-build-env:java25-sdk34
   credentials:
     username: ${{ secrets.DOCKERHUB_USERNAME }}
     password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -94,7 +130,7 @@ container:
 
 Copy `gitlab-ci.yml` to your repo root as `.gitlab-ci.yml` and replace `YOUR_DOCKERHUB_USER`.
 
-For **private** Docker Hub repos, add this CI/CD variable in GitLab
+For **private** registries, add this CI/CD variable in GitLab
 (**Settings → CI/CD → Variables**):
 
 | Variable | Value |
@@ -112,7 +148,7 @@ echo -n "YOUR_DOCKERHUB_USER:YOUR_ACCESS_TOKEN" | base64
 docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
-  YOUR_DOCKERHUB_USER/android-ci:latest \
+  YOUR_DOCKERHUB_USER/android-build-env:java25-sdk34 \
   ./gradlew assembleDebug
 ```
 
@@ -143,14 +179,7 @@ ENV ANDROID_COMPILE_SDK=35 \
 ```
 
 ### Switch to Java 21 LTS
-Replace the Java install block's JDK_URL with the Temurin 21 URL from adoptium.net.
+Replace the Java install block in the Dockerfile with the Temurin 21 binary from https://adoptium.net and update `JAVA_HOME` accordingly.
 
 ### Kotlin / AGP version
-Update warmup/build.gradle to pre-warm the exact versions your project uses.
-
----
-
-## Notes on Java 25
-
-Java 25 is an **Early Access** release. Once GA ships, update the `JDK_URL` in
-the Dockerfile to the stable Temurin/Adoptium download — no other changes needed.
+Update `warmup/build.gradle` to pre-warm the exact AGP and Kotlin versions your project uses, so those are cached in the image layer too.
