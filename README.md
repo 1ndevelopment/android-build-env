@@ -1,7 +1,7 @@
-# Android Builder Environment Container
+# Android Builder Environment
 
-Pre-built Docker image with **Java 25 + Gradle 9.3.0 + Android SDK 34**.  
-Push it to Docker Hub once — pull it anywhere, get straight to building.
+Create pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 34**.  
+Push them to Docker Hub once — pull them from anywhere and get straight to building.
 
 ---
 
