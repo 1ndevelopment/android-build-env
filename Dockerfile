@@ -52,7 +52,6 @@ RUN apt-get update -qq && \
         libgcc-s1 \
         # Required by some NDK tools and build-tools
         libncurses6 \
-#       libncurses5 \
         zlib1g \
         # Misc utilities
         ca-certificates \
@@ -74,7 +73,9 @@ RUN mkdir -p /opt/java && \
     curl -fsSL -o jdk-25_linux-x64_bin.tar.gz \
         https://download.oracle.com/java/25/archive/jdk-25_linux-x64_bin.tar.gz && \
     tar -xzf jdk-25_linux-x64_bin.tar.gz -C /opt/java --strip-components=1 && \
-    rm jdk-25_linux-x64_bin.tar.gz
+    rm jdk-25_linux-x64_bin.tar.gz && \
+    # World-readable so any user can execute
+    chmod -R 755 /opt/java
 
 # Verify Java
 RUN java -version
@@ -86,7 +87,9 @@ RUN mkdir -p /opt/gradle && \
     wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" \
          -O /tmp/gradle.zip && \
     unzip -q /tmp/gradle.zip -d /opt/gradle && \
-    rm /tmp/gradle.zip
+    rm /tmp/gradle.zip && \
+    # World-readable so any user can execute
+    chmod -R 755 /opt/gradle
 
 # Verify Gradle
 RUN gradle --version
@@ -138,21 +141,47 @@ RUN rm -rf /tmp/warmup
 # ============================================================
 #  7. Final setup
 # ============================================================
-# Non-root user for safety (many CI systems prefer this)
-RUN groupadd --gid 1001 builder && \
-    useradd --uid 1001 --gid builder --shell /bin/bash --create-home builder && \
-    chown -R builder:builder "${ANDROID_HOME}"
+# Create a dedicated group for SDK access
+RUN groupadd --gid 1001 android && \
+    # builder user — default non-root CI user
+    groupadd --gid 1002 builder && \
+    useradd --uid 1002 --gid builder --shell /bin/bash --create-home builder && \
+    # Add builder to the android group
+    usermod -aG android builder && \
+    # Allow builder passwordless sudo
+    echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Allow builder user access root via sudoers
-RUN echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Set ownership & permissions so any member of the android group
+# can read/write/execute the entire SDK, Java, and Gradle installs
+RUN chown -R root:android "${ANDROID_HOME}" && \
+    chmod -R 775 "${ANDROID_HOME}" && \
+    chown -R root:android /opt/java && \
+    chmod -R 755 /opt/java && \
+    chown -R root:android /opt/gradle && \
+    chmod -R 755 /opt/gradle && \
+    # Sticky group bit so new files inside inherit the android group
+    find "${ANDROID_HOME}" -type d -exec chmod g+s {} \; && \
+    find /opt/gradle -type d -exec chmod g+s {} \;
+
+# Expose the android group and key env vars to all future users
+# by writing to /etc/environment (sourced login-wide)
+RUN echo "ANDROID_HOME=${ANDROID_HOME}" >> /etc/environment && \
+    echo "ANDROID_SDK_ROOT=${ANDROID_HOME}" >> /etc/environment && \
+    echo "JAVA_HOME=${JAVA_HOME}" >> /etc/environment && \
+    echo "GRADLE_HOME=${GRADLE_HOME}" >> /etc/environment && \
+    # Also add to /etc/profile.d so PATH is set for any login shell
+    echo "export PATH=${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:\$PATH" \
+        > /etc/profile.d/android-tools.sh && \
+    chmod +x /etc/profile.d/android-tools.sh
 
 WORKDIR /workspace
 
-# Switch to non-root user by default.
+# Switch to non-root builder user by default.
+# Any other user added to the 'android' group gets the same access.
 # Override with --user root if your CI runner requires it.
 USER builder
 
-# Verify the full toolchain is functional
+# Verify the full toolchain is functional as non-root
 RUN java -version && \
     gradle --version && \
     sdkmanager --list_installed
