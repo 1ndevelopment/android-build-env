@@ -59,6 +59,7 @@ RUN apt-get update -qq && \
         locales \
         openssh-client \
         rsync \
+        sudo \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -141,6 +142,9 @@ RUN rm -rf /tmp/warmup
 RUN groupadd --gid 1001 builder && \
     useradd --uid 1001 --gid builder --shell /bin/bash --create-home builder && \
     chown -R builder:builder "${ANDROID_HOME}"
+
+# Allow builder user access root via sudoers
+RUN echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 WORKDIR /workspace
 
