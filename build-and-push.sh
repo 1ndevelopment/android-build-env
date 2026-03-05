@@ -1,62 +1,179 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────
 #  build-and-push.sh
-#  Builds the Android CI image and pushes it to Docker Hub.
+#  Builds the Android CI image and pushes it to any container registry.
 #
-#  Prerequisites:
-#    docker login   (run once — credentials are cached)
+#  Supported registries:
+#    dockerhub   → docker.io        (user/repo)
+#    ghcr        → ghcr.io          (GitHub Container Registry)
+#    gcr         → gcr.io           (Google Container Registry)
+#    ecr         → <account>.dkr.ecr.<region>.amazonaws.com
+#    acr         → <registry>.azurecr.io (Azure Container Registry)
+#    custom      → any registry URL you provide
 #
 #  Usage:
-#    ./build-and-push.sh <dockerhub-username> [tag]
+#    ./build-and-push.sh --registry <registry> --user <user> [options]
+#
+#  Options:
+#    --registry   dockerhub | ghcr | gcr | ecr | acr | custom  (default: dockerhub)
+#    --user       username, org, or project (required for most registries)
+#    --repo       repository/image name                         (default: android-build-env)
+#    --tag        image tag                                      (default: java25-sdk34)
+#    --host       custom registry host (required for ecr, acr, custom)
+#    --no-cache   build without Docker layer cache
+#    --no-push    build only, skip push
+#    --help       show this help
 #
 #  Examples:
-#    ./build-and-push.sh myuser
-#    ./build-and-push.sh myuser sdk34-java25
-#    ./build-and-push.sh myuser latest
+#    # Docker Hub
+#    ./build-and-push.sh --registry dockerhub --user 1ndevelopment
+#
+#    # GitHub Container Registry
+#    ./build-and-push.sh --registry ghcr --user myorg
+#
+#    # Google Container Registry
+#    ./build-and-push.sh --registry gcr --user my-gcp-project
+#
+#    # Amazon ECR
+#    ./build-and-push.sh --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com --user myorg
+#
+#    # Azure Container Registry
+#    ./build-and-push.sh --registry acr --host myregistry.azurecr.io --user myorg
+#
+#    # Custom / self-hosted
+#    ./build-and-push.sh --registry custom --host registry.mycompany.com --user myteam
+#
+#    # Build only, no push
+#    ./build-and-push.sh --registry dockerhub --user 1ndevelopment --no-push
 # ─────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-DOCKERHUB_USER="${1:-}"
-TAG="${2:-sdk34-java25-gradle9.3.0}"
-REPO="android-build-env"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ── Validate input ───────────────────────────────────────────────
-if [[ -z "${DOCKERHUB_USER}" ]]; then
-  echo "❌  Usage: ./build-and-push.sh <dockerhub-username> [tag]"
-  echo "    Example: ./build-and-push.sh myuser latest"
-  exit 1
-fi
+# ── Defaults ─────────────────────────────────────────────────────
+REGISTRY="dockerhub"
+USER=""
+REPO="android-build-env"
+TAG="java25-sdk34"
+HOST=""
+NO_CACHE=""
+NO_PUSH=false
 
-FULL_IMAGE="${DOCKERHUB_USER}/${REPO}:${TAG}"
-LATEST_IMAGE="${DOCKERHUB_USER}/${REPO}:latest"
+# ── Colours ──────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+RESET='\033[0m'
 
-echo "──────────────────────────────────────────────"
-echo "  Docker Hub user : ${DOCKERHUB_USER}"
-echo "  Repository      : ${REPO}"
-echo "  Tag             : ${TAG}"
-echo "  Full image      : ${FULL_IMAGE}"
-echo "──────────────────────────────────────────────"
+# ── Help ─────────────────────────────────────────────────────────
+usage() {
+  sed -n '/^#  Usage:/,/^[^#]/p' "$0" | sed 's/^#  \?//' | head -n -1
+  exit 0
+}
 
-# ── Ensure Docker is logged in to Docker Hub ─────────────────────
-if ! docker info 2>/dev/null | grep -q "Username"; then
-  echo "▶  Not logged in to Docker Hub. Running docker login..."
-  docker login
+# ── Argument parsing ─────────────────────────────────────────────
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --registry)  REGISTRY="$2";  shift 2 ;;
+    --user)      USER="$2";      shift 2 ;;
+    --repo)      REPO="$2";      shift 2 ;;
+    --tag)       TAG="$2";       shift 2 ;;
+    --host)      HOST="$2";      shift 2 ;;
+    --no-cache)  NO_CACHE="--no-cache"; shift ;;
+    --no-push)   NO_PUSH=true;   shift ;;
+    --help|-h)   usage ;;
+    *) echo -e "${RED}❌  Unknown option: $1${RESET}"; usage ;;
+  esac
+done
+
+# ── Resolve registry host & image path ───────────────────────────
+case "${REGISTRY}" in
+  dockerhub)
+    [[ -z "${USER}" ]] && { echo -e "${RED}❌  --user is required for dockerhub${RESET}"; exit 1; }
+    REGISTRY_HOST="docker.io"
+    IMAGE_PATH="${USER}/${REPO}"
+    LOGIN_CMD="docker login"
+    ;;
+  ghcr)
+    [[ -z "${USER}" ]] && { echo -e "${RED}❌  --user is required for ghcr${RESET}"; exit 1; }
+    REGISTRY_HOST="ghcr.io"
+    IMAGE_PATH="ghcr.io/${USER}/${REPO}"
+    LOGIN_CMD="docker login ghcr.io"
+    ;;
+  gcr)
+    [[ -z "${USER}" ]] && { echo -e "${RED}❌  --user (GCP project) is required for gcr${RESET}"; exit 1; }
+    REGISTRY_HOST="gcr.io"
+    IMAGE_PATH="gcr.io/${USER}/${REPO}"
+    LOGIN_CMD="gcloud auth configure-docker gcr.io --quiet"
+    ;;
+  ecr)
+    [[ -z "${HOST}" ]] && { echo -e "${RED}❌  --host <account>.dkr.ecr.<region>.amazonaws.com is required for ecr${RESET}"; exit 1; }
+    REGISTRY_HOST="${HOST}"
+    IMAGE_PATH="${HOST}/${REPO}"
+    # ECR login uses AWS CLI — extract region from host
+    ECR_REGION=$(echo "${HOST}" | grep -oP '(?<=ecr\.)[^.]+(?=\.amazonaws)')
+    LOGIN_CMD="aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${HOST}"
+    ;;
+  acr)
+    [[ -z "${HOST}" ]] && { echo -e "${RED}❌  --host <registry>.azurecr.io is required for acr${RESET}"; exit 1; }
+    REGISTRY_HOST="${HOST}"
+    IMAGE_PATH="${HOST}/${REPO}"
+    LOGIN_CMD="az acr login --name ${HOST%%.*}"
+    ;;
+  custom)
+    [[ -z "${HOST}" ]] && { echo -e "${RED}❌  --host is required for custom registry${RESET}"; exit 1; }
+    REGISTRY_HOST="${HOST}"
+    IMAGE_PATH="${HOST}/${USER:+${USER}/}${REPO}"
+    LOGIN_CMD="docker login ${HOST}"
+    ;;
+  *)
+    echo -e "${RED}❌  Unknown registry: ${REGISTRY}${RESET}"
+    echo "    Supported: dockerhub | ghcr | gcr | ecr | acr | custom"
+    exit 1
+    ;;
+esac
+
+FULL_IMAGE="${IMAGE_PATH}:${TAG}"
+LATEST_IMAGE="${IMAGE_PATH}:latest"
+
+# ── Summary ──────────────────────────────────────────────────────
+echo -e "${BOLD}──────────────────────────────────────────────${RESET}"
+echo -e "  Registry   : ${CYAN}${REGISTRY} (${REGISTRY_HOST})${RESET}"
+[[ -n "${USER}" ]] && echo    "  User/Org   : ${USER}"
+echo    "  Repository : ${REPO}"
+echo    "  Tag        : ${TAG}"
+echo -e "  Image      : ${CYAN}${FULL_IMAGE}${RESET}"
+[[ -n "${NO_CACHE}" ]] && echo "  Cache      : disabled"
+[[ "${NO_PUSH}" == true ]]   && echo "  Push       : skipped"
+echo -e "${BOLD}──────────────────────────────────────────────${RESET}"
+
+# ── Login ────────────────────────────────────────────────────────
+if [[ "${NO_PUSH}" == false ]]; then
+  echo ""
+  echo "▶  Logging in to ${REGISTRY_HOST}..."
+  eval "${LOGIN_CMD}"
 fi
 
 # ── Build ────────────────────────────────────────────────────────
 echo ""
 echo "▶  Building image..."
 docker build \
-  --no-cache \
+  ${NO_CACHE} \
   --progress=plain \
   --tag "${FULL_IMAGE}" \
   --tag "${LATEST_IMAGE}" \
   "${SCRIPT_DIR}"
 
-echo "✅  Build complete: ${FULL_IMAGE}"
+echo -e "${GREEN}✅  Build complete: ${FULL_IMAGE}${RESET}"
 
-# ── Push both tags ───────────────────────────────────────────────
+# ── Push ─────────────────────────────────────────────────────────
+if [[ "${NO_PUSH}" == true ]]; then
+  echo ""
+  echo "ℹ   Skipping push (--no-push)"
+  exit 0
+fi
+
 echo ""
 echo "▶  Pushing ${FULL_IMAGE}..."
 docker push "${FULL_IMAGE}"
@@ -65,6 +182,6 @@ echo "▶  Pushing ${LATEST_IMAGE}..."
 docker push "${LATEST_IMAGE}"
 
 echo ""
-echo "✅  Done! Your image is live at:"
+echo -e "${GREEN}${BOLD}✅  Done! Pull your image with:${RESET}"
 echo "    docker pull ${FULL_IMAGE}"
 echo "    docker pull ${LATEST_IMAGE}"
