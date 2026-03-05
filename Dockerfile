@@ -5,7 +5,7 @@
 FROM ubuntu:24.04
 
 LABEL maintainer="1ndevelopment" \
-      description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 34" \
+      description="Android build environment image: Java 25, Gradle 9.3.0, Android SDK 34" \
       android.compileSdk="34" \
       android.buildTools="34.0.0" \
       gradle.version="9.3.0" \
@@ -24,7 +24,7 @@ ENV JAVA_VERSION=25 \
 # ── Path layout ──────────────────────────────────────────────
 ENV ANDROID_HOME=/opt/android-sdk \
     GRADLE_HOME=/opt/gradle/gradle-9.3.0 \
-    JAVA_HOME=/opt/java
+    JAVA_HOME=/opt/java/jdk-25
 
 ENV PATH="${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:${PATH}"
 
@@ -138,8 +138,8 @@ RUN rm -rf /tmp/warmup
 #  7. Final setup
 # ============================================================
 # Non-root user for safety (many CI systems prefer this)
-RUN groupadd --gid 1000 builder && \
-    useradd --uid 1000 --gid builder --shell /bin/bash --create-home builder && \
+RUN groupadd --gid 1001 builder && \
+    useradd --uid 1001 --gid builder --shell /bin/bash --create-home builder && \
     chown -R builder:builder "${ANDROID_HOME}"
 
 WORKDIR /workspace
