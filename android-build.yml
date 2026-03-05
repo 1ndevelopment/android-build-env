@@ -1,0 +1,86 @@
+# .github/workflows/android-build.yml
+#
+# Example CI workflow that pulls your pre-built Android image from Docker Hub
+# instead of installing the toolchain on every run.
+#
+# Replace YOUR_DOCKERHUB_USER with your Docker Hub username.
+
+name: Android Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-apk:
+    name: Build APK & AAB
+    runs-on: ubuntu-latest
+
+    container:
+      image: YOUR_DOCKERHUB_USER/android-ci:latest   # ← your Docker Hub username
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}      # Docker Hub access token
+      options: --user root                             # remove if your runner supports uid 1000
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # ── Build debug APK ──────────────────────────────────────
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        working-directory: ${{ github.workspace }}
+
+      # ── Build release AAB ────────────────────────────────────
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease --no-daemon --stacktrace
+        working-directory: ${{ github.workspace }}
+
+      # ── (Optional) Sign the APK ──────────────────────────────
+      # - name: Sign APK
+      #   uses: r0adkll/sign-android-release@v1
+      #   with:
+      #     releaseDirectory: app/build/outputs/apk/release
+      #     signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+      #     alias: ${{ secrets.ALIAS }}
+      #     keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+      #     keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      # ── Upload artifacts ─────────────────────────────────────
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aab
+          path: app/build/outputs/bundle/release/*.aab
+          retention-days: 14
+
+  # ── Optional: run unit tests in the same image ──────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    container:
+      image: YOUR_DOCKERHUB_USER/android-ci:latest
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: "**/build/reports/tests/**"

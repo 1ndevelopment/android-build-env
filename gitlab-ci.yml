@@ -1,0 +1,62 @@
+# .gitlab-ci.yml
+#
+# Example GitLab CI pipeline using your pre-built Android image from Docker Hub.
+# Replace YOUR_DOCKERHUB_USER with your Docker Hub username.
+#
+# For private repos, set these CI/CD variables in GitLab:
+#   DOCKER_AUTH_CONFIG  →  {"auths":{"https://index.docker.io/v1/":{"auth":"<base64 user:token>"}}}
+
+image: YOUR_DOCKERHUB_USER/android-ci:latest   # ← your Docker Hub username
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+
+stages:
+  - test
+  - build
+
+# ── Cache Gradle home between pipeline runs ──────────────────
+.gradle-cache: &gradle-cache
+  cache:
+    key: gradle-${CI_COMMIT_REF_SLUG}
+    paths:
+      - .gradle/
+    policy: pull-push
+
+# ── Unit tests ───────────────────────────────────────────────
+unit-tests:
+  stage: test
+  <<: *gradle-cache
+  script:
+    - ./gradlew testDebugUnitTest
+  artifacts:
+    when: always
+    reports:
+      junit: "**/build/test-results/**/*.xml"
+    expire_in: 1 week
+
+# ── Debug APK ────────────────────────────────────────────────
+build-debug:
+  stage: build
+  <<: *gradle-cache
+  script:
+    - ./gradlew assembleDebug
+  artifacts:
+    name: "debug-apk-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - app/build/outputs/apk/debug/*.apk
+    expire_in: 1 week
+
+# ── Release AAB (main branch only) ───────────────────────────
+build-release-aab:
+  stage: build
+  <<: *gradle-cache
+  only:
+    - main
+  script:
+    - ./gradlew bundleRelease
+  artifacts:
+    name: "release-aab-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - app/build/outputs/bundle/release/*.aab
+    expire_in: 4 weeks
