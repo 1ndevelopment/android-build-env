@@ -1,6 +1,6 @@
 # Android Builder Environment
 
-Generate pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 34**.  
+Generate pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 35**.  
 Build and push it to any container registry once — pull it anywhere and get straight to building.  
 No toolchain setup on every CI run.
 
@@ -13,8 +13,8 @@ No toolchain setup on every CI run.
 | Base OS | Ubuntu 24.04 |
 | Java | Oracle JDK 25 |
 | Gradle | 9.3.0 |
-| Android compileSdk | 34 |
-| Android Build Tools | 34.0.0 |
+| Android compileSdk | 35 |
+| Android Build Tools | 35.0.0 |
 | Android Platform Tools | latest |
 | Android Extras | m2repo, Google Play Services |
 
@@ -68,7 +68,7 @@ chmod +x build-and-push.sh
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--repo` | Override the image name | `android-build-env` |
-| `--tag` | Override the image tag | `java25-sdk34` |
+| `--tag` | Override the image tag | `java25-sdk35` |
 | `--no-cache` | Build without Docker layer cache | — |
 | `--no-push` | Build only, skip push | — |
 
@@ -121,7 +121,7 @@ az acr login --name myregistry
 
 ```yaml
 container:
-  image: YOUR_DOCKERHUB_USER/android-build-env:java25-sdk34
+  image: YOUR_DOCKERHUB_USER/android-build-env:java25-sdk35
   credentials:
     username: ${{ secrets.DOCKERHUB_USERNAME }}
     password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -149,7 +149,7 @@ echo -n "YOUR_DOCKERHUB_USER:YOUR_ACCESS_TOKEN" | base64
 docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
-  YOUR_DOCKERHUB_USER/android-build-env:java25-sdk34 \
+  YOUR_DOCKERHUB_USER/android-build-env:java25-sdk35 \
   ./gradlew assembleDebug
 ```
 
