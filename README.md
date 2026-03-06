@@ -1,4 +1,4 @@
-# Android Builder Environment (A.B.E)
+# Android Build Environment (A.B.E)
 
 Generate pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 35**.  
 Build and push it to any container registry once — pull it anywhere and get straight to building.  
