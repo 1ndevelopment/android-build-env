@@ -1,13 +1,13 @@
 # ============================================================
 #  Android CI Build Image
-#  Java 25 + Gradle 9.3.0 + Android SDK 34
+#  Java 25 + Gradle 9.3.0 + Android SDK 35
 # ============================================================
 FROM ubuntu:24.04
 
 LABEL maintainer="1ndevelopment" \
-      description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 34" \
-      android.compileSdk="34" \
-      android.buildTools="34.0.0" \
+      description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 35" \
+      android.compileSdk="35" \
+      android.buildTools="35.0.0" \
       gradle.version="9.3.0" \
       java.version="25"
 
@@ -17,8 +17,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # ── Core versions ────────────────────────────────────────────
 ENV JAVA_VERSION=25 \
     GRADLE_VERSION=9.3.0 \
-    ANDROID_COMPILE_SDK=34 \
-    ANDROID_BUILD_TOOLS=34.0.0 \
+    ANDROID_COMPILE_SDK=35 \
+    ANDROID_BUILD_TOOLS=35.0.0 \
     ANDROID_SDK_TOOLS_VERSION=11076708
 
 # ── Path layout ──────────────────────────────────────────────
