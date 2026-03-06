@@ -2,7 +2,7 @@
 #  Android CI Build Image
 #  Java 25 + Gradle 9.3.0 + Android SDK 35
 # ============================================================
-FROM ubuntu:24.04
+FROM debian:bookworm-slim
 
 LABEL maintainer="1ndevelopment" \
       description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 35" \
@@ -36,24 +36,19 @@ ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
 # ============================================================
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
-        # Download / extract tools
         curl \
         wget \
         unzip \
         zip \
         tar \
-        # Build essentials
         git \
         make \
-        # Required by sdkmanager / aapt / aapt2
         lib32stdc++6 \
         lib32z1 \
         libc6-i386 \
         libgcc-s1 \
-        # Required by some NDK tools and build-tools
         libncurses6 \
         zlib1g \
-        # Misc utilities
         ca-certificates \
         locales \
         openssh-client \
@@ -61,7 +56,10 @@ RUN apt-get update -qq && \
         sudo \
         nano \
         zstd \
-    && locale-gen en_US.UTF-8 \
+        nodejs \
+        npm \
+    && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+    && locale-gen \
     && rm -rf /var/lib/apt/lists/*
 
 ENV LANG=en_US.UTF-8 \
