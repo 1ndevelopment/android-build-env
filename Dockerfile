@@ -59,6 +59,7 @@ RUN apt-get update -qq && \
         openssh-client \
         rsync \
         sudo \
+        nano \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
