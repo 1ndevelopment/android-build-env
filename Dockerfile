@@ -55,6 +55,7 @@ RUN apt-get update -qq && \
         rsync \
         sudo \
         nano \
+        jq \
         zstd \
         nodejs \
         npm \
