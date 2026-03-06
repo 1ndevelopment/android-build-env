@@ -1,7 +1,7 @@
-# Android Builder Environment
+]# Android Builder Environment
 
 Generate pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 34**.  
-Build and push it to any container registry once — pull it anywhere and get straight to building.
+Build and push it to any container registry once — pull it anywhere and get straight to building.  
 No toolchain setup on every CI run.
 
 ---
