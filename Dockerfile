@@ -59,6 +59,8 @@ RUN apt-get update -qq && \
         zstd \
         nodejs \
         npm \
+        python3 \
+        python3-pip \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
     && locale-gen \
     && rm -rf /var/lib/apt/lists/*
