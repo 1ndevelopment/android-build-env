@@ -60,6 +60,7 @@ RUN apt-get update -qq && \
         rsync \
         sudo \
         nano \
+        zstd \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
