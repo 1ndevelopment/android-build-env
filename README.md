@@ -1,10 +1,6 @@
 # Android Build Environment (A.B.E)
 
-<div align="center">
-
-<img src="https://files.1ndev.com/images/software/android-build-env/A.B.E.png" alt="Android Build Environment" style="max-width: 75%; height: auto; border-radius: 8px;" />
-
-</div>
+<img src="https://files.1ndev.com/images/software/android-build-env/A.B.E.png" alt="Android Build Environment" width="120" align="right" style="border-radius: 8px; margin-left: 16px;" />
 
 Generate pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 35**.  
 Build and push it to any container registry once — pull it anywhere and get straight to building.  
