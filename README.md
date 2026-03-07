@@ -33,17 +33,17 @@ Build once. Pull anywhere. Your CI pipeline goes straight to `./gradlew` — no 
 
 ```
 .
-├── Dockerfile               ← Image definition
-├── build-and-push.sh        ← Build & push to any container registry
-├── warmup/                  ← Minimal Android project (pre-warms Gradle cache)
+├── Dockerfile                  ← Image definition
+├── build-android-ci-image.sh   ← Build & push to any container registry
+├── warmup/                     ← Minimal Android project (pre-warms Gradle cache)
 │   ├── build.gradle
 │   ├── settings.gradle
 │   ├── gradle.properties
 │   └── app/
 │       ├── build.gradle
 │       └── src/main/...
-├── android-build.yml        ← Example GitHub Actions workflow
-└── gitlab-ci.yml            ← Example GitLab CI pipeline
+├── android-build.yml           ← Example GitHub Actions workflow
+└── gitlab-ci.yml               ← Example GitLab CI pipeline
 ```
 
 ---
@@ -51,29 +51,29 @@ Build once. Pull anywhere. Your CI pipeline goes straight to `./gradlew` — no 
 ## 1 · Build & push the image
 
 ```bash
-chmod +x build-and-push.sh
+chmod +x build-android-ci-image.sh
 ```
 
 Pick your registry:
 
 ```bash
 # Docker Hub
-./build-and-push.sh --registry dockerhub --user 1ndevelopment
+./build-android-ci-image.sh --registry dockerhub --user 1ndevelopment
 
 # GitHub Container Registry
-./build-and-push.sh --registry ghcr --user 1ndevelopment
+./build-android-ci-image.sh --registry ghcr --user 1ndevelopment
 
 # Google Container Registry
-./build-and-push.sh --registry gcr --user my-gcp-project
+./build-android-ci-image.sh --registry gcr --user my-gcp-project
 
 # Amazon ECR
-./build-and-push.sh --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com
+./build-android-ci-image.sh --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com
 
 # Azure Container Registry
-./build-and-push.sh --registry acr --host myregistry.azurecr.io
+./build-android-ci-image.sh --registry acr --host myregistry.azurecr.io
 
 # Self-hosted / custom
-./build-and-push.sh --registry custom --host registry.mycompany.com --user myteam
+./build-android-ci-image.sh --registry custom --host registry.mycompany.com --user myteam
 ```
 
 ### Flags
