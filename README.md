@@ -3,7 +3,7 @@
 
   <h1>Android Build Environment</h1>
 
-  <p><strong>Generate pre-built Docker images for Android CI - zero toolchain setup, every time.</strong></p>
+  <p><strong>Generate android build environments - zero toolchain setup, every time.</strong></p>
 
   <p>
     <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square&logo=oracle" />
