@@ -3,7 +3,7 @@
 
   <h1>Android Build Environment</h1>
 
-  <p><strong>Pre-built Docker images for Android CI — zero toolchain setup, every time.</strong></p>
+  <p><strong>Generate pre-built Docker images for Android CI - zero toolchain setup, every time.</strong></p>
 
   <p>
     <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square&logo=oracle" />
@@ -15,7 +15,7 @@
 
 ---
 
-Build once. Pull anywhere. Your CI pipeline goes straight to `./gradlew` — no SDK downloads, no Java installs, no waiting.
+Build once. Pull anywhere. — no SDK downloads, no Java installs, no waiting.
 
 ## What's inside
 
