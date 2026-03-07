@@ -29,6 +29,21 @@ Build once. Pull anywhere. — no SDK downloads, no Java installs, no waiting.
 | Android Platform Tools | latest |
 | Android Extras | m2repo, Google Play Services |
 
+### Pre-installed packages
+
+The following packages are pre-installed in the Docker image:
+
+- **build-tools**: 35.0.0, 34.0.0
+- **platforms**: android-35, android-34
+- **extras**: android-m2repository, google-repo, google-play-services
+- **platform-tools**: latest (from Android SDK command-line tools)
+- **cmdline-tools**: latest (for sdkmanager access)
+
+Additional system packages:
+- curl, wget, git, unzip, zip, tar
+- python3, python3-pip
+- openjdk-17-jdk (for Gradle daemon compatibility)
+
 ## File structure
 
 ```
