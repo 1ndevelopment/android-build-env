@@ -2,7 +2,7 @@
 
 <div align="center">
 
-  <img src="https://files.1ndev.com/images/software/android-build-env/A.B.E.png" alt="A.B.E." style="max-width: 100%; height: auto; border-radius: 8px;" />
+  <img src="https://files.1ndev.com/images/software/android-build-env/A.B.E.png" alt="A.B.E." style="max-width: 100%; height: 80%; border-radius: 8px;" />
 
 </div>
 
