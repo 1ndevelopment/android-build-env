@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://files.1ndev.com/images/software/android-build-env/A.B.E.png" alt="Android Build Environment" width="100" style="border-radius: 12px;" />
+  <img src="https://files.1ndev.com/images/software/android-build-env/A.B.E.png" alt="Android Build Environment" width="180" style="border-radius: 12px;" />
 
   <h1>Android Build Environment</h1>
 
