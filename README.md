@@ -3,10 +3,12 @@
 <img src="https://files.1ndev.com/images/software/android-build-env/A.B.E.png" alt="ABE" width="120" align="left" style="border-radius: 8px; margin-left: 16px;" />
 
 Generate pre-built Docker images with **Java 25 + Gradle 9.3.0 + Android SDK 35**.  
-Build and push it to any container registry — pull it anywhere and get straight to building.  
+Build and push it to any container registry - pull it anywhere and get straight to building.  
 No toolchain setup on every CI run.
 
+
 ---
+
 
 ## Contents
 
