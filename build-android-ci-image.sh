@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────
-#  build-and-push.sh
+#  build-android-ci-image.sh
 #  Builds the Android CI image and pushes it to any container registry.
 #
 #  Supported registries:
@@ -12,7 +12,7 @@
 #    custom      → any registry URL you provide
 #
 #  Usage:
-#    ./build-and-push.sh --registry <registry> --user <user> [options]
+#    ./build-android-ci-image.sh --registry <registry> --user <user> [options]
 #
 #  Options:
 #    --registry   dockerhub | ghcr | gcr | ecr | acr | custom  (default: dockerhub)
@@ -26,25 +26,25 @@
 #
 #  Examples:
 #    # Docker Hub
-#    ./build-and-push.sh --registry dockerhub --user 1ndevelopment
+#    ./build-android-ci-image.sh --registry dockerhub --user 1ndevelopment
 #
 #    # GitHub Container Registry
-#    ./build-and-push.sh --registry ghcr --user myorg
+#    ./build-android-ci-image.sh --registry ghcr --user myorg
 #
 #    # Google Container Registry
-#    ./build-and-push.sh --registry gcr --user my-gcp-project
+#    ./build-android-ci-image.sh --registry gcr --user my-gcp-project
 #
 #    # Amazon ECR
-#    ./build-and-push.sh --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com --user myorg
+#    ./build-android-ci-image.sh --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com --user myorg
 #
 #    # Azure Container Registry
-#    ./build-and-push.sh --registry acr --host myregistry.azurecr.io --user myorg
+#    ./build-android-ci-image.sh --registry acr --host myregistry.azurecr.io --user myorg
 #
 #    # Custom / self-hosted
-#    ./build-and-push.sh --registry custom --host registry.mycompany.com --user myteam
+#    ./build-android-ci-image.sh --registry custom --host registry.mycompany.com --user myteam
 #
 #    # Build only, no push
-#    ./build-and-push.sh --registry dockerhub --user 1ndevelopment --no-push
+#    ./build-android-ci-image.sh --registry dockerhub --user 1ndevelopment --no-push
 # ─────────────────────────────────────────────────────────────────
 set -euo pipefail
 
