@@ -49,7 +49,7 @@ Additional system packages:
 ```
 .
 ├── Dockerfile                  ← Image definition
-├── build-android-ci-image.sh   ← Build & push to any container registry
+├── abe   ← Build & push to any container registry
 ├── warmup/                     ← Minimal Android project (pre-warms Gradle cache)
 │   ├── build.gradle
 │   ├── settings.gradle
@@ -66,29 +66,29 @@ Additional system packages:
 ## 1 · Build & push the image
 
 ```bash
-chmod +x build-android-ci-image.sh
+chmod +x abe
 ```
 
 Pick your registry:
 
 ```bash
 # Docker Hub
-./build-android-ci-image.sh --registry dockerhub --user 1ndevelopment
+./abe --registry dockerhub --user 1ndevelopment
 
 # GitHub Container Registry
-./build-android-ci-image.sh --registry ghcr --user 1ndevelopment
+./abe --registry ghcr --user 1ndevelopment
 
 # Google Container Registry
-./build-android-ci-image.sh --registry gcr --user my-gcp-project
+./abe --registry gcr --user my-gcp-project
 
 # Amazon ECR
-./build-android-ci-image.sh --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com
+./abe --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com
 
 # Azure Container Registry
-./build-android-ci-image.sh --registry acr --host myregistry.azurecr.io
+./abe --registry acr --host myregistry.azurecr.io
 
 # Self-hosted / custom
-./build-android-ci-image.sh --registry custom --host registry.mycompany.com --user myteam
+./abe --registry custom --host registry.mycompany.com --user myteam
 ```
 
 ### Flags

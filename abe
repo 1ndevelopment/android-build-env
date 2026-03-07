@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────
+<<<<<<< HEAD:build-android-ci-image.sh
 #  build-android-ci-image.sh
+=======
+#  abe
+>>>>>>> f9d437e (Add Apache License to project. Rename build script and update references.):abe
 #  Builds the Android CI image and pushes it to any container registry.
 #
 #  Supported registries:
@@ -12,7 +16,11 @@
 #    custom      → any registry URL you provide
 #
 #  Usage:
+<<<<<<< HEAD:build-android-ci-image.sh
 #    ./build-android-ci-image.sh --registry <registry> --user <user> [options]
+=======
+#    ./abe --registry <registry> --user <user> [options]
+>>>>>>> f9d437e (Add Apache License to project. Rename build script and update references.):abe
 #
 #  Options:
 #    --registry   dockerhub | ghcr | gcr | ecr | acr | custom  (default: dockerhub)
@@ -26,6 +34,7 @@
 #
 #  Examples:
 #    # Docker Hub
+<<<<<<< HEAD:build-android-ci-image.sh
 #    ./build-android-ci-image.sh --registry dockerhub --user 1ndevelopment
 #
 #    # GitHub Container Registry
@@ -45,6 +54,27 @@
 #
 #    # Build only, no push
 #    ./build-android-ci-image.sh --registry dockerhub --user 1ndevelopment --no-push
+=======
+#    ./abe --registry dockerhub --user 1ndevelopment
+#
+#    # GitHub Container Registry
+#    ./abe --registry ghcr --user myorg
+#
+#    # Google Container Registry
+#    ./abe --registry gcr --user my-gcp-project
+#
+#    # Amazon ECR
+#    ./abe --registry ecr --host 123456789.dkr.ecr.us-east-1.amazonaws.com --user myorg
+#
+#    # Azure Container Registry
+#    ./abe --registry acr --host myregistry.azurecr.io --user myorg
+#
+#    # Custom / self-hosted
+#    ./abe --registry custom --host registry.mycompany.com --user myteam
+#
+#    # Build only, no push
+#    ./abe --registry dockerhub --user 1ndevelopment --no-push
+>>>>>>> f9d437e (Add Apache License to project. Rename build script and update references.):abe
 # ─────────────────────────────────────────────────────────────────
 set -euo pipefail
 
