@@ -19,14 +19,15 @@ ENV JAVA_VERSION=25 \
     GRADLE_VERSION=9.3.0 \
     ANDROID_COMPILE_SDK=35 \
     ANDROID_BUILD_TOOLS=35.0.0 \
-    ANDROID_SDK_TOOLS_VERSION=11076708
+    ANDROID_SDK_TOOLS_VERSION=11076708 \
+    ANDROID_NDK_VERSION=27.0.12077973
 
 # ── Path layout ──────────────────────────────────────────────
 ENV ANDROID_HOME=/opt/android-sdk \
     GRADLE_HOME=/opt/gradle/gradle-9.3.0 \
     JAVA_HOME=/opt/java
 
-ENV PATH="${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:${PATH}"
+ENV PATH="${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}:${PATH}"
 
 # ── Android SDK license acceptance ───────────────────────────
 ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
@@ -124,7 +125,7 @@ RUN sdkmanager --update && \
         "extras;google;google_play_services"
 
 # Optional extras — uncomment to include NDK or emulator support:
-# RUN sdkmanager "ndk;25.2.9519653"
+RUN sdkmanager "ndk;${ANDROID_NDK_VERSION}"
 # RUN sdkmanager "emulator" "system-images;android-34;google_apis;x86_64"
 
 # ============================================================
@@ -171,10 +172,11 @@ RUN chown -R root:android "${ANDROID_HOME}" && \
 # by writing to /etc/environment (sourced login-wide)
 RUN echo "ANDROID_HOME=${ANDROID_HOME}" >> /etc/environment && \
     echo "ANDROID_SDK_ROOT=${ANDROID_HOME}" >> /etc/environment && \
+    echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}" >> /etc/environment && \
     echo "JAVA_HOME=${JAVA_HOME}" >> /etc/environment && \
     echo "GRADLE_HOME=${GRADLE_HOME}" >> /etc/environment && \
     # Also add to /etc/profile.d so PATH is set for any login shell
-    echo "export PATH=${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:\$PATH" \
+    echo "export PATH=${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}:\$PATH" \
         > /etc/profile.d/android-tools.sh && \
     chmod +x /etc/profile.d/android-tools.sh
 
@@ -188,6 +190,7 @@ USER builder
 # Verify the full toolchain is functional as non-root
 RUN java -version && \
     gradle --version && \
-    sdkmanager --list_installed
+    sdkmanager --list_installed && \
+    ls -la ${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}
 
 CMD ["/bin/bash"]
