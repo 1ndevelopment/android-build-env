@@ -39,6 +39,7 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
         curl \
         wget \
+        sshpass \
         unzip \
         zip \
         tar \
