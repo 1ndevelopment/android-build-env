@@ -123,7 +123,8 @@ RUN sdkmanager --update && \
         "build-tools;${ANDROID_BUILD_TOOLS}" \
         "extras;android;m2repository" \
         "extras;google;m2repository" \
-        "extras;google;google_play_services"
+        "extras;google;google_play_services" \
+        "cmake;3.22.1"
 
 # Optional extras — uncomment to include NDK or emulator support:
 RUN sdkmanager "ndk;${ANDROID_NDK_VERSION}"
