@@ -22,6 +22,7 @@ Build once. Pull anywhere. — no SDK downloads, no Java installs, no waiting.
 | Tool | Version |
 |------|---------|
 | Base OS | Ubuntu 24.04 |
+| Cmake | 3.22.1 |
 | Java | Oracle JDK 25 |
 | Gradle | 9.3.0 |
 | Android compileSdk | 35 |
