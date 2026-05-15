@@ -199,6 +199,8 @@ RUN echo "ANDROID_HOME=${ANDROID_HOME}" >> /etc/environment && \
 
 WORKDIR /workspace
 
+RUN chown -R builder:builder /workspace
+
 # Switch to non-root builder user by default.
 # Any other user added to the 'android' group gets the same access.
 # Override with --user root if your CI runner requires it.
