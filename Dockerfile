@@ -142,38 +142,7 @@ RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
 # RUN sdkmanager "emulator" "system-images;android-34;google_apis;x86_64"
 
 # ============================================================
-#  6. Pre-warm the Gradle cache (wrapper + common plugins)
-#     Build a minimal Android project so that Gradle downloads
-#     its dependency metadata at image-build time, not CI time.
-# ============================================================
-# Gradle init script: translates HTTP_PROXY env var → JVM system properties
-# (Gradle's Java HTTP client uses system properties, not env vars)
-RUN mkdir -p ${GRADLE_HOME}/init.d && \
-    cat > ${GRADLE_HOME}/init.d/proxy.gradle << 'INIT'
-def proxyHost = System.getenv('HTTP_PROXY') ?: System.getenv('http_proxy') ?: ''
-if (proxyHost) {
-    try {
-        def uri = new URI(proxyHost)
-        if (uri.host) {
-            System.setProperty('http.proxyHost', uri.host)
-            System.setProperty('http.proxyPort', String.valueOf(uri.port > 0 ? uri.port : 80))
-            System.setProperty('https.proxyHost', uri.host)
-            System.setProperty('https.proxyPort', String.valueOf(uri.port > 0 ? uri.port : 80))
-        }
-    } catch (Exception e) {
-        System.err.println "Gradle init: failed to parse proxy ${proxyHost}: ${e.message}"
-    }
-}
-INIT
-
-WORKDIR /tmp/warmup
-COPY warmup/ /tmp/warmup/
-RUN gradle dependencies --no-daemon --quiet || true && \
-    gradle assembleDebug --no-daemon --quiet || true && \
-    rm -rf /tmp/warmup ~/.gradle/wrapper/dists
-
-# ============================================================
-#  7. Strip native binaries & clean package caches
+#  6. Strip native binaries & clean package caches
 # ============================================================
 RUN if [ "$INSTALL_NDK" = "true" ]; then \
         find ${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}/toolchains \
@@ -186,7 +155,7 @@ RUN if [ "$INSTALL_NDK" = "true" ]; then \
     pip cache purge 2>/dev/null || true
 
 # ============================================================
-#  8. Final setup
+#  7. Final setup
 # ============================================================
 # Create a dedicated group for SDK access
 # BUILDER_UID / BUILDER_GID should match the host user's uid:gid so that
