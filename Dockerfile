@@ -16,7 +16,10 @@ ENV http_proxy=http://192.168.49.1:8000 \
     HTTP_PROXY=http://192.168.49.1:8000 \
     HTTPS_PROXY=http://192.168.49.1:8000
 
+ARG INSTALL_NDK=false
+
 LABEL maintainer="1ndevelopment" \
+      install.ndk="${INSTALL_NDK}" \
       description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 35" \
       android.compileSdk="35" \
       android.buildTools="35.0.0" \
@@ -46,6 +49,7 @@ ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
 # ============================================================
 RUN apk add --no-cache \
         bash \
+        binutils \
         curl \
         wget \
         sshpass \
@@ -86,7 +90,8 @@ RUN mkdir -p /opt/java && \
     chmod -R 755 /opt/java
 
 # Verify Java
-RUN java -version
+RUN java -version && \
+    rm -rf /opt/java/lib/src.zip /opt/java/man
 
 # ============================================================
 #  3. Gradle 9.3.0
@@ -100,7 +105,8 @@ RUN mkdir -p /opt/gradle && \
     chmod -R 755 /opt/gradle
 
 # Verify Gradle
-RUN gradle --version
+RUN gradle --version && \
+    rm -rf ${GRADLE_HOME}/docs ${GRADLE_HOME}/src ${GRADLE_HOME}/javadoc
 
 # ============================================================
 #  4. Android Command-line Tools (sdkmanager)
@@ -116,9 +122,8 @@ RUN mkdir -p "${ANDROID_HOME}/cmdline-tools" && \
 # ============================================================
 #  5. Accept Android SDK licenses & install SDK components
 # ============================================================
-RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true
-
-RUN sdkmanager --update && \
+RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
+    sdkmanager --update && \
     sdkmanager \
         "platform-tools" \
         "platforms;android-${ANDROID_COMPILE_SDK}" \
@@ -126,10 +131,12 @@ RUN sdkmanager --update && \
         "extras;android;m2repository" \
         "extras;google;m2repository" \
         "extras;google;google_play_services" \
-        "cmake;3.22.1"
-
-# Optional extras — uncomment to include NDK or emulator support:
-RUN sdkmanager "ndk;${ANDROID_NDK_VERSION}"
+        "cmake;3.22.1" && \
+    rm -rf ~/.android/cache && \
+    if [ "$INSTALL_NDK" = "true" ]; then \
+        sdkmanager "ndk;${ANDROID_NDK_VERSION}" && \
+        rm -rf ~/.android/cache; \
+    fi
 # RUN sdkmanager "emulator" "system-images;android-34;google_apis;x86_64"
 
 # ============================================================
@@ -138,17 +145,26 @@ RUN sdkmanager "ndk;${ANDROID_NDK_VERSION}"
 #     its dependency metadata at image-build time, not CI time.
 # ============================================================
 WORKDIR /tmp/warmup
-
 COPY warmup/ /tmp/warmup/
-
 RUN gradle dependencies --no-daemon --quiet || true && \
-    gradle assembleDebug --no-daemon --quiet || true
-
-# Clean up warmup project after caching
-RUN rm -rf /tmp/warmup
+    gradle assembleDebug --no-daemon --quiet || true && \
+    rm -rf /tmp/warmup ~/.gradle/wrapper/dists
 
 # ============================================================
-#  7. Final setup
+#  7. Strip native binaries & clean package caches
+# ============================================================
+RUN if [ "$INSTALL_NDK" = "true" ]; then \
+        find ${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}/toolchains \
+            -name '*.so*' -type f -exec strip --strip-unneeded {} \; \
+            2>/dev/null || true && \
+        find ${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}/toolchains \
+            -type f -executable -exec strip --strip-unneeded {} \; \
+            2>/dev/null || true; \
+    fi && \
+    pip cache purge 2>/dev/null || true
+
+# ============================================================
+#  8. Final setup
 # ============================================================
 # Create a dedicated group for SDK access
 RUN addgroup -g 1001 android && \
@@ -192,6 +208,8 @@ USER builder
 RUN java -version && \
     gradle --version && \
     sdkmanager --list_installed && \
-    ls -la ${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}
+    if [ "$INSTALL_NDK" = "true" ]; then \
+        ls -la ${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}; \
+    fi
 
 CMD ["/bin/bash"]
