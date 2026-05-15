@@ -71,6 +71,7 @@ RUN apk add --no-cache \
         github-cli \
         jq \
         zstd \
+        gcompat \
         python3 \
         py3-pip
 
