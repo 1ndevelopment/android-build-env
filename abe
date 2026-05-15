@@ -164,6 +164,10 @@ for var in HTTP_PROXY HTTPS_PROXY http_proxy https_proxy; do
   fi
 done
 
+# Match builder uid/gid to the host user so mounted volumes are writable
+BUILD_ARGS+=(--build-arg "BUILDER_UID=$(id -u)")
+BUILD_ARGS+=(--build-arg "BUILDER_GID=$(id -g)")
+
 # ── Build ────────────────────────────────────────────────────────
 echo ""
 echo "▶  Building image..."

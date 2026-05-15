@@ -16,6 +16,8 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
     https_proxy=${https_proxy}
 
 ARG INSTALL_NDK=false
+ARG BUILDER_UID=1002
+ARG BUILDER_GID=1002
 
 LABEL maintainer="1ndevelopment" \
       install.ndk="${INSTALL_NDK}" \
@@ -144,6 +146,26 @@ RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
 #     Build a minimal Android project so that Gradle downloads
 #     its dependency metadata at image-build time, not CI time.
 # ============================================================
+# Gradle init script: translates HTTP_PROXY env var → JVM system properties
+# (Gradle's Java HTTP client uses system properties, not env vars)
+RUN mkdir -p ${GRADLE_HOME}/init.d && \
+    cat > ${GRADLE_HOME}/init.d/proxy.gradle << 'INIT'
+def proxyHost = System.getenv('HTTP_PROXY') ?: System.getenv('http_proxy') ?: ''
+if (proxyHost) {
+    try {
+        def uri = new URI(proxyHost)
+        if (uri.host) {
+            System.setProperty('http.proxyHost', uri.host)
+            System.setProperty('http.proxyPort', String.valueOf(uri.port > 0 ? uri.port : 80))
+            System.setProperty('https.proxyHost', uri.host)
+            System.setProperty('https.proxyPort', String.valueOf(uri.port > 0 ? uri.port : 80))
+        }
+    } catch (Exception e) {
+        System.err.println "Gradle init: failed to parse proxy ${proxyHost}: ${e.message}"
+    }
+}
+INIT
+
 WORKDIR /tmp/warmup
 COPY warmup/ /tmp/warmup/
 RUN gradle dependencies --no-daemon --quiet || true && \
@@ -167,9 +189,12 @@ RUN if [ "$INSTALL_NDK" = "true" ]; then \
 #  8. Final setup
 # ============================================================
 # Create a dedicated group for SDK access
+# BUILDER_UID / BUILDER_GID should match the host user's uid:gid so that
+# mounted volumes are writable. Defaults to 1002:1002.
+# Pass --build-arg BUILDER_UID=$(id -u) --build-arg BUILDER_GID=$(id -g) to match.
 RUN addgroup -g 1001 android && \
-    addgroup -g 1002 builder && \
-    adduser -u 1002 -G builder -s /bin/bash -D builder && \
+    addgroup -g ${BUILDER_GID} builder && \
+    adduser -u ${BUILDER_UID} -G builder -s /bin/bash -D builder && \
     adduser builder android && \
     echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
