@@ -156,12 +156,21 @@ if [[ "${NO_PUSH}" == false ]]; then
   eval "${LOGIN_CMD}"
 fi
 
+# ── Proxy build-args ─────────────────────────────────────────────
+BUILD_ARGS=()
+for var in HTTP_PROXY HTTPS_PROXY http_proxy https_proxy; do
+  if [[ -n "${!var:-}" ]]; then
+    BUILD_ARGS+=(--build-arg "${var}=${!var}")
+  fi
+done
+
 # ── Build ────────────────────────────────────────────────────────
 echo ""
 echo "▶  Building image..."
 docker build \
   ${NO_CACHE} \
   --progress=plain \
+  "${BUILD_ARGS[@]}" \
   --tag "${FULL_IMAGE}" \
   --tag "${LATEST_IMAGE}" \
   "${SCRIPT_DIR}"

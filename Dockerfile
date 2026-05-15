@@ -5,16 +5,15 @@
 FROM alpine:3.20
 
 ## Proxy config
-
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG http_proxy
 ARG https_proxy
 
-ENV http_proxy=http://192.168.49.1:8000 \
-    https_proxy=http://192.168.49.1:8000 \
-    HTTP_PROXY=http://192.168.49.1:8000 \
-    HTTPS_PROXY=http://192.168.49.1:8000
+ENV HTTP_PROXY=${HTTP_PROXY} \
+    HTTPS_PROXY=${HTTPS_PROXY} \
+    http_proxy=${http_proxy} \
+    https_proxy=${https_proxy}
 
 ARG INSTALL_NDK=false
 
