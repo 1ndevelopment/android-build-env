@@ -2,7 +2,19 @@
 #  Android CI Build Image
 #  Java 25 + Gradle 9.3.0 + Android SDK 35
 # ============================================================
-FROM debian:bookworm-slim
+FROM alpine:3.20
+
+## Proxy config
+
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG http_proxy
+ARG https_proxy
+
+ENV http_proxy=http://192.168.49.1:8000 \
+    https_proxy=http://192.168.49.1:8000 \
+    HTTP_PROXY=http://192.168.49.1:8000 \
+    HTTPS_PROXY=http://192.168.49.1:8000
 
 LABEL maintainer="1ndevelopment" \
       description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 35" \
@@ -10,9 +22,6 @@ LABEL maintainer="1ndevelopment" \
       android.buildTools="35.0.0" \
       gradle.version="9.3.0" \
       java.version="25"
-
-# ── Prevent interactive prompts during apt installs ──────────
-ENV DEBIAN_FRONTEND=noninteractive
 
 # ── Core versions ────────────────────────────────────────────
 ENV JAVA_VERSION=25 \
@@ -35,8 +44,8 @@ ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
 # ============================================================
 #  1. System dependencies
 # ============================================================
-RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends \
+RUN apk add --no-cache \
+        bash \
         curl \
         wget \
         sshpass \
@@ -45,41 +54,34 @@ RUN apt-get update -qq && \
         tar \
         git \
         make \
-        lib32stdc++6 \
-        lib32z1 \
-        libc6-i386 \
-        libgcc-s1 \
-        libncurses6 \
-        zlib1g \
+        libgcc \
+        libstdc++ \
+        ncurses \
+        zlib \
         ca-certificates \
-        locales \
-        openssh-client \
+        musl-locales \
+        openssh-client-default \
         rsync \
         sudo \
         nano \
-        gh \
+        github-cli \
         jq \
         zstd \
-        nodejs \
-        npm \
         python3 \
-        python3-pip \
-    && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
-    && locale-gen \
-    && rm -rf /var/lib/apt/lists/*
+        py3-pip
 
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
 # ============================================================
-#  2. Java 25  (Oracle JDK 25)
+#  2. Java 25  (Azul Zulu JDK 25 — musl build for Alpine)
 # ============================================================
 RUN mkdir -p /opt/java && \
-    curl -fsSL -o jdk-25_linux-x64_bin.tar.gz \
-        https://download.oracle.com/java/25/archive/jdk-25_linux-x64_bin.tar.gz && \
-    tar -xzf jdk-25_linux-x64_bin.tar.gz -C /opt/java --strip-components=1 && \
-    rm jdk-25_linux-x64_bin.tar.gz && \
+    curl -fsSL -o jdk-25_musl_x64.tar.gz \
+        https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_musl_x64.tar.gz && \
+    tar -xzf jdk-25_musl_x64.tar.gz -C /opt/java --strip-components=1 && \
+    rm jdk-25_musl_x64.tar.gz && \
     # World-readable so any user can execute
     chmod -R 755 /opt/java
 
@@ -149,13 +151,10 @@ RUN rm -rf /tmp/warmup
 #  7. Final setup
 # ============================================================
 # Create a dedicated group for SDK access
-RUN groupadd --gid 1001 android && \
-    # builder user — default non-root CI user
-    groupadd --gid 1002 builder && \
-    useradd --uid 1002 --gid builder --shell /bin/bash --create-home builder && \
-    # Add builder to the android group
-    usermod -aG android builder && \
-    # Allow builder passwordless sudo
+RUN addgroup -g 1001 android && \
+    addgroup -g 1002 builder && \
+    adduser -u 1002 -G builder -s /bin/bash -D builder && \
+    adduser builder android && \
     echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Set ownership & permissions so any member of the android group

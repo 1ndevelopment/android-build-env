@@ -6,10 +6,10 @@
   <p><strong>Generate android build environments - zero toolchain setup, every time.</strong></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square&logo=oracle" />
+    <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square&logo=openjdk" />
     <img src="https://img.shields.io/badge/Gradle-9.3.0-02303A?style=flat-square&logo=gradle" />
     <img src="https://img.shields.io/badge/Android_SDK-35-3DDC84?style=flat-square&logo=android" />
-    <img src="https://img.shields.io/badge/Ubuntu-24.04-E95420?style=flat-square&logo=ubuntu" />
+    <img src="https://img.shields.io/badge/Alpine_Linux-3.20-0D597F?style=flat-square&logo=alpinelinux" />
   </p>
 </div>
 
@@ -21,9 +21,9 @@ Build once. Pull anywhere. — no SDK downloads, no Java installs, no waiting.
 
 | Tool | Version |
 |------|---------|
-| Base OS | Ubuntu 24.04 |
+| Base OS | Alpine Linux 3.20 |
 | Cmake | 3.22.1 |
-| Java | Oracle JDK 25 |
+| Java | Azul Zulu JDK 25 (musl) |
 | Gradle | 9.3.0 |
 | Android compileSdk | 35 |
 | Android Build Tools | 35.0.0 |
@@ -42,8 +42,7 @@ The following packages are pre-installed in the Docker image:
 
 Additional system packages:
 - curl, wget, git, unzip, zip, tar
-- python3, python3-pip
-- openjdk-17-jdk (for Gradle daemon compatibility)
+- python3, py3-pip
 
 ## File structure
 
