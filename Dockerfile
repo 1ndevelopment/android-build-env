@@ -74,7 +74,9 @@ RUN apk add --no-cache \
         zstd \
         gcompat \
         python3 \
-        py3-pip
+        py3-pip \
+        nodejs \
+        npm
 
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
