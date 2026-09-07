@@ -1,6 +1,6 @@
 # ============================================================
 #  Android CI Build Image
-#  Java 25 + Gradle 9.3.0 + Android SDK 35
+#  Java 25 + Gradle 9.3.0 + Android SDK 36
 # ============================================================
 FROM alpine:3.20
 
@@ -21,17 +21,17 @@ ARG BUILDER_GID=1002
 
 LABEL maintainer="1ndevelopment" \
       install.ndk="${INSTALL_NDK}" \
-      description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 35" \
-      android.compileSdk="35" \
-      android.buildTools="35.0.0" \
+      description="Android CI build image: Java 25, Gradle 9.3.0, Android SDK 36" \
+      android.compileSdk="36" \
+      android.buildTools="36.0.0" \
       gradle.version="9.3.0" \
       java.version="25"
 
 # ── Core versions ────────────────────────────────────────────
 ENV JAVA_VERSION=25 \
     GRADLE_VERSION=9.3.0 \
-    ANDROID_COMPILE_SDK=35 \
-    ANDROID_BUILD_TOOLS=35.0.0 \
+    ANDROID_COMPILE_SDK=36 \
+    ANDROID_BUILD_TOOLS=36.0.0 \
     ANDROID_SDK_TOOLS_VERSION=11076708 \
     ANDROID_NDK_VERSION=27.0.12077973
 
@@ -125,10 +125,11 @@ RUN mkdir -p "${ANDROID_HOME}/cmdline-tools" && \
 
 # ============================================================
 #  5. Accept Android SDK licenses & install SDK components
+#     (Platform 36 + Build-Tools 36.0.0)
 # ============================================================
 RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
-    sdkmanager --update && \
-    sdkmanager \
+    sdkmanager --update || true
+RUN sdkmanager \
         "platform-tools" \
         "platforms;android-${ANDROID_COMPILE_SDK}" \
         "build-tools;${ANDROID_BUILD_TOOLS}" \
@@ -136,9 +137,11 @@ RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
         "extras;google;m2repository" \
         "extras;google;google_play_services" \
         "cmake;3.22.1" && \
+    yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
     rm -rf ~/.android/cache && \
     if [ "$INSTALL_NDK" = "true" ]; then \
         sdkmanager "ndk;${ANDROID_NDK_VERSION}" && \
+        yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
         rm -rf ~/.android/cache; \
     fi
 # RUN sdkmanager "emulator" "system-images;android-34;google_apis;x86_64"
